@@ -1,11 +1,17 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const [deployer, ikco, user_1, user_2] = await ethers.getSigners();
+  const [deployer, ikco, user_1, user_2, user_3] = await ethers.getSigners();
   const ikcoAddress = await ikco.getAddress();
   const deployerAddress = await deployer.getAddress();
+  const user_1Address = await user_1.getAddress();
+  const user_2Address = await user_2.getAddress();
+  const user_3Address = await user_3.getAddress();
   console.log("deployer Address : ", deployerAddress);
   console.log("ikco Address : ", ikcoAddress);
+  console.log("user_1 : ", user_1Address);
+  console.log("user_2 : ", user_2Address);
+  console.log("user_3 : ", user_3Address);
 
   const IKCOExchange = await ethers.getContractFactory("IKCOExchange");
   const ikcoExchange = await IKCOExchange.connect(deployer).deploy();

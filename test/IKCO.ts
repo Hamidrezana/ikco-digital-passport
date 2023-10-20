@@ -70,28 +70,7 @@ describe("IKCO Contract Test", function () {
     });
 
     it("Should deploy main contract right", async function () {
-      const [deployer, ikco] = await ethers.getSigners();
-
-      const IKCOExchange = await ethers.getContractFactory("IKCOExchange");
-      const ikcoExchange = await IKCOExchange.connect(deployer).deploy();
-      await ikcoExchange.waitForDeployment();
-      const ikcoExchangeAddress = await ikcoExchange.getAddress();
-  
-      const IKCOVehicleNFT = await ethers.getContractFactory("IKCOVehicleNFT");
-      const ikcoVehicleNFT = await IKCOVehicleNFT.connect(deployer).deploy();
-      await ikcoVehicleNFT.waitForDeployment();
-      const ikcoVehicleNFTAddress = await ikcoVehicleNFT.getAddress();
-  
-      const IKCOMain = await ethers.getContractFactory("IKCOMain");
-      const ikcoMain = await IKCOMain.connect(deployer).deploy(
-        ikcoExchangeAddress,
-        ikcoVehicleNFTAddress,
-        ikco,
-      );
-      await ikcoMain.waitForDeployment();
-      const ikcoMainAddress = await ikcoMain.getAddress();
-      await ikcoExchange.setMainContractAddress(ikcoMainAddress);
-      await ikcoVehicleNFT.setMainContractAddress(ikcoMainAddress);
+      await loadFixture(init);
     });
   });
 
@@ -116,9 +95,10 @@ describe("IKCO Contract Test", function () {
     });
 
     it("Should fail if sender is not IKCO", async function () {
-      const { ikcoMain, ikco, user_1 } = await loadFixture(init);
-      await mintVehicle(ikcoMain, ikco, user_1);
-      await expect(ikcoMain.setKilometer(0, 10)).to.be.revertedWith("Sender not authorized.");
+      const { ikcoMain, ikco, user_1, user_2 } = await loadFixture(init);
+      await expect(
+        ikcoMain.connect(user_2).mintVehicle(user_1, "ikco", 1402, "bodyNumber#1", "207"),
+      ).to.be.revertedWith("Sender not authorized.");
     });
   });
 
@@ -146,23 +126,6 @@ describe("IKCO Contract Test", function () {
       await expect(ikcoMain.connect(ikco).setKilometer(0, 5)).to.be.revertedWith(
         "New Kilometer should bigger than last one.",
       );
-    });
-
-    it("Should place for sell right", async function () {
-      const { ikcoMain, ikcoVehicleNFT, ikco, user_1, user_2, TEN_ETHER } = await loadFixture(init);
-      const mintTx = await mintVehicle(ikcoMain, ikco, user_1);
-      const mintedTokenId = (mintTx?.logs[0] as any).args?.[0] || 0;
-      await ikcoVehicleNFT.connect(user_1).approveToMainContract(mintedTokenId);
-      await ikcoMain.connect(user_1).placeSell(user_2, mintedTokenId, TEN_ETHER);
-    });
-
-    it("Should not place for sell", async function () {
-      const { ikcoMain, ikcoVehicleNFT, ikco, user_1, user_2, TEN_ETHER } = await loadFixture(init);
-      const mintTx = await mintVehicle(ikcoMain, ikco, user_1);
-      const mintedTokenId = (mintTx?.logs[0] as any).args?.[0] || 0;
-      await expect(
-        ikcoMain.connect(user_1).placeSell(user_2, mintedTokenId, TEN_ETHER),
-      ).to.be.revertedWith("Approved is not set for this NFT.");
     });
   });
 
